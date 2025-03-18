@@ -1,0 +1,30 @@
+// X-bit Right Shifter
+module shifter_BitR #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of the shifter
+)(
+    input a[SIZE],   // Input operand
+    input shift[5],  // Shift amount (0-31)
+    output result[SIZE] // Shifted result
+) {
+    sig bit1[SIZE];
+    sig bit2[SIZE];
+    sig bit4[SIZE];
+    sig bit8[SIZE];
+    sig bit16[SIZE]
+    
+    always {
+        
+        // shift 1 bit
+        bit1 = shift[0] ? c{1b0 , a[SIZE-1:1]} : a; 
+        // shift 2 bit
+        bit2 = shift[1] ?  c{2b00 , bit1[SIZE-1:2]} : bit1;
+        // shift 4 bit
+        //bit4 = shift[2] ?  c{4b0000,bit2[SIZE-1:4]}: bit2;
+        // shift 8 bit
+        //bit8 = shift[3] ? c{8b00000000,bit4[SIZE-1:8]} : bit4;
+        // shift 16 bits
+        //bit16 = shift[4] ? c{16b0000000000000000,bit8[SIZE-1:16]} : bit8;
+
+        result = bit2;
+    }
+}
