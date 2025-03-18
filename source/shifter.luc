@@ -1,0 +1,42 @@
+// 32-bit Shifter Unit
+module shifter #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of the shifter
+)(
+    input a[SIZE],     // Input operand
+    input b[SIZE],     // Shift amount (lower 5 bits used)
+    input alufn[2],  // ALU function selector
+    output out[SIZE] // Shift result
+) {
+    //sig shift_amt[5] = b[4:0];  // Extract lower 5 bits of b
+    sig shift_amt[5] = b[3:0];  // Extract lower 5 bits of b
+
+    
+    // Instantiate specific shifter modules
+    shifter_BitL left_shift(#SIZE(SIZE));
+    shifter_BitR right_shift(#SIZE(SIZE));
+    shifter_ArithBitR arith_right_shift(#SIZE(SIZE));
+    
+    always {
+        // Assign inputs to shifters
+        left_shift.a = a;
+        left_shift.shift = shift_amt;
+
+        right_shift.a = a;
+        right_shift.shift = shift_amt;
+
+        arith_right_shift.a = a;
+        arith_right_shift.shift = shift_amt;
+
+        // Select output based on ALUFN        
+        case (alufn){
+            // left shift
+            2b00: out = left_shift.result;  
+            // right shift
+            2b01: out = right_shift.result;
+            // arith right shift
+            2b11: out = arith_right_shift.result;
+       
+            default:  out = 4b0; // Default case
+        }
+    }
+}
