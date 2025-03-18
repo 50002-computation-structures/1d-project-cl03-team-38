@@ -1,0 +1,20 @@
+// 32-bit Boolean Logic Unit
+module boolean #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of the Boolean unit
+)(
+    input a[SIZE],       // First operand
+    input b[SIZE],       // Second operand
+    input alufn[3],      // ALU function selector for Boolean operations
+    output out[SIZE]     // 32-bit result
+) {
+    boolean_mux_4 mux[SIZE];  // Instantiate 4-to-1 Boolean multiplexer
+
+    always {
+        repeat(i, SIZE) {
+            mux.modeSel[i] = alufn;
+            mux.a[i] = a[i];
+            mux.b[i] = b[i];
+            out[i] = mux.out[i];
+        }
+    }
+}
