@@ -1,0 +1,60 @@
+// Arithmetic Logic Unit (ALU)
+module alu #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of the ALU
+)(
+    input a[SIZE],         // First operand
+    input b[SIZE],         // Second operand
+    input alufn[6],        // ALU function selector
+    output out[SIZE],       // ALU result
+    output zero_flag,        // Status flags
+    output overflow_flag,
+    output negative_flag  
+){      
+
+    // Instantiate functional units
+    adder adder_inst(#SIZE(SIZE));
+    multiplier multiplier_inst(#SIZE(SIZE));
+    boolean boolean_inst(#SIZE(SIZE));
+    shifter shifter_inst(#SIZE(SIZE));
+    compare compare_inst(#SIZE(SIZE));
+
+    always {
+        // Configure adder
+        adder_inst.a = a;
+        adder_inst.b = b;
+        adder_inst.alufn = alufn[0];  // 00 = Add, 01 = Subtract
+        zero_flag = adder_inst.zero_flag;
+        overflow_flag = adder_inst.overflow_flag;
+        negative_flag = adder_inst.negative_flag;
+
+        // Configure multiplier
+        multiplier_inst.a = a;
+        multiplier_inst.b = b;
+        multiplier_inst.alufn = alufn[1];
+
+        // Configure boolean unit
+        boolean_inst.a = a;
+        boolean_inst.b = b;
+        boolean_inst.alufn = alufn[3:1];  // 100: AND, 111: OR, 011: XOR, 101: Pass-through A
+        
+        // Configure shifter
+        shifter_inst.a = a;
+        shifter_inst.b = b;
+        shifter_inst.alufn = alufn[3:2];  // 00: Logical Left, 01: Logical Right, 11: Arithmetic Right
+        
+        // Configure comparator
+        compare_inst.z = adder_inst.zero_flag;
+        compare_inst.v = adder_inst.overflow_flag;
+        compare_inst.n = adder_inst.negative_flag;
+        compare_inst.alufn = alufn[2:1];  // 01: EQ, 10: LT, 11: LE, 00: GT
+
+        // ALU Function Selection
+        case (alufn[5:4]) {
+            2b00: out = alufn[1] ? multiplier_inst.out : adder_inst.out;
+            2b01: out = boolean_inst.out;
+            2b10: out = shifter_inst.out;
+            2b11: out = compare_inst.out;    // to turn on alufn[0] to work
+            default: out = 0;
+        }
+    }
+}
