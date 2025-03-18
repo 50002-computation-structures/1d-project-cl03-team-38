@@ -1,0 +1,16 @@
+module compare_mux_4 (
+    input modeSel, // mode Selector
+    input in[4], // inputs
+    output out
+) {
+    always {
+        // 01: EQ, 10: LT, 11: LE, 00: GT
+        case (modeSel) {
+            b01: out = in[0];// Equal (a == b)
+            b10: out = in[1];// Less than (a < b)
+            b11: out = in[2]; // Less than or equal (a <= b)
+            b00: out = in[3]; // More than (a > b)
+            default: out = 0;
+        }
+    }
+}
