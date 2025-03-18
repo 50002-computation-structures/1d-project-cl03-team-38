@@ -1,0 +1,32 @@
+// 32-bit Compare Unit
+module compare #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of comparison
+)(
+    input z,  // Zero flag
+    input v,  // Overflow flag
+    input n,  // Negative flag
+    input alufn[2],  // ALU function selector
+    output out  // Comparison result
+) {
+    sig eq;
+    sig lt;
+    sig le;
+    sig gt; // Comparison conditions
+    compare_mux_4 mux;
+    
+    always {
+        // Compute comparisons
+        eq = z;                         // A == B, 01
+        lt = !(n ^ v);                     // A < B (signed), 10
+        le = eq | lt;                   // A <= B, 11
+        gt = ~(le);                     // A > B, 00
+
+        // Multiplex the correct comparison result
+        mux.modeSel = alufn;
+        mux.in[0] = eq;
+        mux.in[1] = lt;
+        mux.in[2] = le;
+        mux.in[3] = gt;
+        out = mux.out;
+    }
+}
