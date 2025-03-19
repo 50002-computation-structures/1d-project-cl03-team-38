@@ -1,0 +1,15 @@
+module modulo #(
+    SIZE ~ 32 : SIZE > 0  // Allows different sizes
+)(
+    input  a[SIZE],  // Dividend
+    input  b[SIZE],  // Divisor
+    output out[SIZE]   // Remainder (a % b)
+) {
+    always {
+        if (b != 0) {
+            out = a - (a / b) * b;
+        } else {
+            out = 0;
+        }
+    }
+}
