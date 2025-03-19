@@ -1,0 +1,10 @@
+module bitwise_not #(
+    SIZE ~ 32 : SIZE > 0  // Allows different sizes
+)(
+    input a[SIZE],  // Input value
+    output out[SIZE]   // Bitwise NOT result (~a)
+) {
+    always {
+        out = ~a;  // Perform bitwise NOT
+    }
+}
