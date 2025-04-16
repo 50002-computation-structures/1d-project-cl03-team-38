@@ -1,0 +1,14 @@
+// 1-bit Full Adder Module
+module adder_fa (
+    input a,        // First operand bit
+    input b,        // Second operand bit
+    input cin,      // Carry-in
+    output s,       // Sum output
+    output cout     // Carry-out
+) {
+    always {
+        // Full adder logic: Sum and Carry-out calculations
+        s = a ^ b ^ cin;
+        cout = (a & b) | (cin & (a ^ b));
+    }
+}

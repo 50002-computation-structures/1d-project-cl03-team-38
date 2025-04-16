@@ -1,0 +1,45 @@
+// Top-level module for Alchitry FPGA board
+module alchitry_top (
+    input clk,              // 100MHz clock input
+    input rst_n,            // Active-low reset button
+    output led[8],          // User LEDs
+    input usb_rx,           // USB Serial Input
+    output usb_tx,          // USB Serial Output
+    output io_led[3][8],    // IO Shield LEDs
+    output io_segment[8],   // 7-Segment Display Outputs
+    output io_select[4],    // 7-Segment Digit Select
+    input io_button[5],     // IO Shield Buttons
+    input io_dip[3][8]      // IO Shield DIP Switches
+) {
+    sig rst; // Reset signal
+
+    // Clock domain for synchronization
+    .clk(clk) {
+        reset_conditioner reset_cond;
+    }
+
+    // Define system clock frequency
+    const CLK_FREQ = $is_sim() ? 1000 : 10000000; // Simulated: 1kHz, Hardware: 10MHz
+
+    // Instantiate the ALU Manual Tester
+    alu_manual_tester alu_manual(
+        .clk(clk), 
+        .rst(rst), 
+        .io_button(io_button), 
+        .io_dip(io_dip), 
+        #CLK_FREQ(CLK_FREQ)
+    );
+
+    always {
+        reset_cond.in = ~rst_n; // Synchronize reset signal
+        rst = reset_cond.out;   // Conditioned reset signal
+
+        usb_tx = usb_rx;  // Direct USB serial loopback
+
+        // Connect ALU Manual Tester outputs
+        io_segment = alu_manual.io_segment;
+        io_select = alu_manual.io_select;        
+        io_led = alu_manual.io_led;
+        led = alu_manual.led;
+    }
+}

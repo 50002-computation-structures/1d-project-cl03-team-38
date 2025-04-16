@@ -1,0 +1,43 @@
+module decimal_counter#(
+) (
+    input clk,      // clock
+    input rst,      // reset
+    input inc,      // increment the counter
+    input dec,
+    input start[4],
+    input limit[4],
+    output ovfp,     // counter overflowed
+    output ovfn,
+    output value[4] // current value
+) {
+    .clk(clk), .rst(rst) {
+        dff val[4](#INIT(start))     // value storage
+    }
+    
+    always {
+        value = val.q             // output the value
+                        
+        ovfp = 0;
+        ovfn = 0;
+        
+        if (inc) {                // should add 1
+            if (val.q == limit){       // if MAX value
+                val.d = 0;         // reset to 0
+                ovfp = 1;
+            }
+            else{                  // otherwise
+                val.d = val.q + 1 // add one
+            }
+        }
+        if (dec) {                // should add 1
+            if (val.q == limit){       // if MIN value
+                val.d = 9;         // reset to 0
+                ovfn = 1;
+            }
+            else{                  // otherwise
+                val.d = val.q - 1 // add one
+                }
+         }
+    }
+}
+ 

@@ -1,0 +1,17 @@
+// 4-to-1 Multiplexer for Boolean Operations
+module boolean_mux_4 (
+    input modeSel[3],  // ALU function selector
+    input a,           // First operand (single bit)
+    input b,           // Second operand (single bit)
+    output out         // Selected Boolean operation result
+) {
+    always {
+        case (modeSel) {
+            b100: out = a & b;  // AND Operation
+            b001: out = a | b;  // OR Operation
+            b011: out = a ^ b;  // XOR Operation
+            b101: out = a;  // A (Passthrough)
+            default: out = 0;
+        }
+    }
+}

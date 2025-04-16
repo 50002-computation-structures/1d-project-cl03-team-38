@@ -1,0 +1,26 @@
+module twos_complement #(
+    SIZE ~ 32 : SIZE > 0
+)(
+    input b[SIZE],
+    output out[SIZE]
+) {
+sig carry  // Start with carry as 1 (to add 1 manually)
+sig b_mod[SIZE]
+
+always {
+    carry = 1
+    b_mod = ~b  // Invert bits
+    
+    // Manually add 1 using carry propagation
+    repeat (i, SIZE) {
+        if (b_mod[i] == 0 && carry == 1) {
+            b_mod[i] = 1
+            carry = 0  // Stop carry propagation
+            } 
+        else if (b_mod[i] == 1 && carry == 1) {
+            b_mod[i] = 0  // Carry continues
+            }
+        }
+    out = b_mod
+    }
+}

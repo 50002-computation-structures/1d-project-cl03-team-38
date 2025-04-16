@@ -1,0 +1,140 @@
+module alchitry_top (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    output led[8],          // 8 user controllable LEDs
+    input usb_rx,           // USB->Serial input
+    output usb_tx,          // USB->Serial output
+    output io_led[3][8],    // LEDs on IO Shield
+    output io_segment[8],   // 7-segment LEDs on IO Shield
+    output io_select[4],    // Digit select on IO Shield
+    output data,
+    input io_button[5],     // 5 buttons on IO Shield
+    input io_dip[3][8]      // DIP switches on IO Shield
+) {
+
+    sig rst;                 // reset signal
+    const CLK_FREQ = $is_sim() ? 1000 : 100000000;
+    // const SEG_REFRESH = $is_sim() ? 2 : 10
+    sig highScore_seg[2][4];
+    
+    
+    enum States {
+        IDLE,
+        START,
+        NEXTNUM, 
+        ADDSCORE,
+        SCORECMP
+    }
+    
+    .clk(clk) {
+        // The reset conditioner is used to synchronize the reset signal to the FPGA
+        // clock. This ensures the entire FPGA comes out of reset at the same time.
+        reset_conditioner reset_cond;
+        edge_detector pulseEdge(#RISE(1),#FALL(0));
+        button_conditioner start_cond(.in(io_button[4]),#CLK_FREQ(CLK_FREQ));
+        edge_detector start_edge(#RISE(1),#FALL(0),.in(start_cond.out));
+        
+        .rst(rst) {
+            // Reduce DIV values for simulation so it doesn't take forever
+            multi_seven_seg seg (#DIV($is_sim() ? 1 : 16), #DIGITS(6))
+            multi_decimal_counter timer (#DIGITS(2), #MODE(1),.limit({4d0,4d0}))
+            multi_decimal_counter pts_ctr (#DIGITS(2), #MODE(0),.start({4d0,4d0}),.limit({4d9,4d9}))
+            counter pulse (#SIZE(1), #DIV($is_sim() ? 8 : 24))
+            dff states[$width(States)](#INIT(States.IDLE));
+            dff currScore[8](#INIT(0));
+            dff highScore[8](#INIT(0));
+            dff startTimeEnable[1](#INIT(0));
+            dff nextNumEnable[2](#INIT(0));
+
+        }
+    }
+    
+    input_controller inpCtr(.clk(clk),.rst_n(rst),.io_button(io_button));
+    number_generator numGen(.clk(clk),.rst_n(rst));
+    alu alu(#SIZE(8),.alufn(6b110101));
+    toggle_mode colourCtr(.clk(clk),.rst_n(rst))
+    // seven_segment_encoder mod_encoder[4](.char($resize(alu.out,4)));
+    // decoder seg_selector(#WIDTH(2), .in(seg_multiplex.q)) 
+    // used to select active segment 0 to 3
+    
+    always {
+        reset_cond.in = ~rst_n;  // input raw inverted reset signal
+        rst = reset_cond.out;    // conditioned reset
+
+        led = c{3b0, io_button}; // connect buttons to LEDs
+        usb_tx = usb_rx;         // loop serial port
+        states.d = states.q;
+        startTimeEnable.d = startTimeEnable.q;
+        nextNumEnable.d = nextNumEnable.q;
+        pulseEdge.in = pulse.value;
+        highScore_seg = c{{4b0},{4b0}};
+        alu.a = 0;
+        alu.b = 0;
+        data = colourCtr.data;
+        timer.start = {4d0,4d0};
+        timer.inc = 0;
+        pts_ctr.inc = 0;
+        numGen.in = 0;
+        inpCtr.currVal = 3d5;        // default value
+        colourCtr.selColour = 3d5;   // default value
+        case(states.q){
+            States.IDLE:
+                // if start, states.d = states.start
+                if (start_edge.out){states.d = States.START;}
+                // if correct input and within time, states.d = states.generate next number  
+                if (inpCtr.validOut && |$flatten(timer.digits)){
+                    states.d = States.NEXTNUM;
+                    nextNumEnable.d = 1;
+                }
+                // if timer=0, states.d = states.scorecmp 
+                if (~|$flatten(timer.digits)){states.d = States.SCORECMP;}
+            States.START:
+                currScore.d = 0;
+                timer.start = {4d3,4d0};  // set countdown to 30 
+                startTimeEnable.d = 1;
+                states.d = States.IDLE;
+            States.NEXTNUM: 
+                // generate next number 
+                if (nextNumEnable.q == 1){
+                    numGen.in = pulseEdge.out
+                    nextNumEnable.d = 2;
+                }    
+                inpCtr.currVal = numGen.out
+                colourCtr.selColour = numGen.out
+                states.d = States.ADDSCORE
+            States.ADDSCORE:
+                if (nextNumEnable.q == 2){
+                    pts_ctr.inc = pulseEdge.out;
+                    nextNumEnable.d = 0;
+                }
+                currScore.d = $flatten(pts_ctr.digits)
+                states.d = States.IDLE;
+            States.SCORECMP:
+                // blink timer and LED 3 times , set io select timer segment to cycle between 
+                // off and on for timer segment 
+                // set colourOut to cycle between off and on 
+                // compare current score and high score
+                startTimeEnable.d = 0;
+                alu.a = highScore.q;
+                alu.b = currScore.q;
+                // update high score if current score higher
+                if (alu.out == 1){
+                    highScore.d = currScore.q;
+                    highScore_seg = pts_ctr.digits;
+                // blink new high score 3 times, for 3 clock cycles, set io select to cycle between 
+                // off and on for score segment 
+                }
+                states.d = States.IDLE
+        }
+        
+        if (startTimeEnable.q == 1) timer.inc = pulseEdge.out;
+        
+        seg.values = c{highScore_seg,timer.digits,pts_ctr.digits};
+        
+        io_segment = seg.seg // connect segments to the driver
+        io_select = seg.sel  // connect digit select to the driver
+
+        io_led = io_dip       // connect the DIP switches to the LEDs
+        
+    }
+}

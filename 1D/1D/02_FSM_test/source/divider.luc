@@ -1,0 +1,95 @@
+module divider #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of the operands
+)(
+    input a[SIZE],         // Dividend
+    input b[SIZE],         // Divisor
+    input alufn[1],        // ALU function selector: perform if alufn == 1
+    output out[SIZE*2],      // Quotient output    ###HERE
+    output rem[SIZE]       // Remainder output
+) {
+    sig remReg[SIZE][SIZE]               // Remainder register (extra sign bit)
+    sig quoReg[SIZE][SIZE]                 // Quotient register
+    sig shifted_remReg[SIZE][SIZE]
+    sig shifted_quoReg[SIZE][SIZE]
+    
+    sig final_remReg[SIZE]
+    sig final_quoReg[SIZE]
+    
+    sig temp[SIZE][SIZE*2]
+
+    // Arithmetic modules
+    #SIZE(SIZE){
+        adder adder[SIZE];
+    }
+    #SIZE(SIZE*2){
+        shifter_BitL shiftL[SIZE];
+    }
+    
+    adder finalAdd(#SIZE(SIZE),.alufn(0),.b(b))
+
+    always {
+
+        repeat(i,SIZE){
+            remReg[i] = 0; // INIT remainder to 0
+            quoReg[i] = 0; // INIT remainder to a (divisor)
+            temp[i] = 0;
+            shiftL.a[i] = 0;
+            adder.a[i] = 0; 
+            adder.b[i] = b;
+            adder.alufn[i] = 0;
+            shifted_remReg[i] = 0;
+            shifted_quoReg[i] = 0;
+        }
+
+        final_remReg = 0;
+        final_quoReg = 0;
+        finalAdd.a = 0;
+        out = 0;
+        rem = 0;
+        quoReg[0] = a;
+        remReg[0] = SIZEx{1b0};
+        
+            // Loop: unrolled logic for SIZE steps
+        repeat (i,SIZE) {    
+            // Step 1: Shift [A,Q] left by 1 bit
+            temp[i] = c{remReg[i],quoReg[i]} 
+            shiftL.shift[i] = 5b00001;
+            shiftL.a[i] = temp[i];
+            shifted_remReg[i] = shiftL.result[i][2*SIZE-1:SIZE]; // chg in remReg value 1
+            shifted_quoReg[i] = shiftL.result[i][SIZE-1:1];
+                
+            // Step 2: Subtract or Add based on sign of A
+            adder.a[i] = shifted_remReg[i];
+            // A = A - M
+            if (shifted_remReg[i][SIZE-1] == 0){
+                adder.alufn[i] = 1;
+            }
+            // A = A + M    
+            else{
+                adder.alufn[i] = 0;      
+            }               
+                
+             if (i<SIZE-1){
+                remReg[i+1] = adder.out[i];    // next remReg value
+                // Step 3: Set LSB of Q  /  next quoReg value
+                quoReg[i+1] = (remReg[i+1][SIZE-1] == 0) ? c{shifted_quoReg[i],1b1} : c{shifted_quoReg[i],1b0}; 
+             }
+             else {
+                if (adder.out[i][SIZE-1] == 1){    // if MSB of final remainder is negative, add divisor 
+                    finalAdd.a = adder.out[i]
+                    final_remReg = finalAdd.out;
+                 }
+                 else{
+                    final_remReg = adder.out[SIZE-1]
+                 }
+                final_quoReg = (adder.out[i][SIZE-1] == 0) ? c{shifted_quoReg[i],1b1} : c{shifted_quoReg[i],1b0}; 
+            }
+        }
+
+            // Final correction for remainder if negative
+            // Outputs
+            out = alufn ? final_quoReg: 0;
+            rem = final_remReg;
+
+    }
+}

@@ -1,0 +1,187 @@
+{
+    "project": {
+        "type": "V1.3",
+        "projectName": "lab3_test",
+        "board": "Alchitry Au",
+        "sourceFiles": [
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/alchitry_top.luc"
+                },
+                "top": true
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Conditioning/reset_conditioner.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/alu.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/adder.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/adder_fa.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/adder_rca.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/twos_complement.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/alu_manual_tester.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/boolean.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/boolean_mux_4.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/compare.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/compare_mux_4.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/multiplier.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/shifter.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/shifter_ArithBitR.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/shifter_BitL.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/shifter_BitR.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/divider.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/pipeline.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Conditioning/button_conditioner.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/bin_to_dec.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/decoder.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/counter.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Pulses/edge_detector.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/pn_gen.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/random_number_generator.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/seven_segment_encoder.luc"
+                }
+            }
+        ],
+        "constraintFiles": [
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Constraints/alchitry.acf"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Constraints/io_v1_pulldown.acf"
+                }
+            }
+        ],
+        "ipCores": []
+    }
+}

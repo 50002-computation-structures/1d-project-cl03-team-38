@@ -1,0 +1,86 @@
+module toggle_mode#(
+    COLUMN_DIMENSION = 4 : COLUMN_DIMENSION > 0,
+    ROW_DIMENSION = 1 : ROW_DIMENSION > 0,
+    PIXEL_COUNT = 4 : PIXEL_COUNT > 0,
+    BUFFER_SIZE = 12 : BUFFER_SIZE > 0 // ensure this value is larger than PIXEL_COUNT * $clog2(COLOR_ENCODING)
+) (
+    input clk,              // 100MHz clock
+    input rst,            // reset button (active low)
+    output led[8],          // 8 user controllable LEDs
+    output io_led[3][8],    // LEDs on IO Shield
+    output io_segment[8],   // 7-segment LEDs on IO Shield
+    output io_select[4],    // Digit select on IO Shield
+    input io_button[5],     // 5 buttons on IO Shield
+    input io_dip[3][8],      // DIP switches on IO Shield
+    output data
+) {
+    
+    // GREEN (111), BLUE (110), RED (101), YELLOW (100), ORANGE (101), VIOLET (110), WHITE (111)
+    const COLOR_ENCODING = {24hFF0000,24h0000FF,24h00FF00,24hFFFF00,24hA5FF00,24h82EEEE,24hFFFFFF}
+   
+    sig pixel_address[BUFFER_SIZE]
+    
+    const CLK_FREQ = $is_sim() ? 1000 : 100000000
+    //index_reverser index_reverser(#COLUMN_DIMENSION(COLUMN_DIMENSION), #SIZE($clog2(PIXEL_COUNT))) 
+    
+    .clk(clk){
+        button_conditioner toggle_button(#CLK_FREQ(CLK_FREQ), .in(io_button[1]))
+        edge_detector toggle_button_edge(#RISE(1), #FALL(0), .in(toggle_button.out))
+        
+        .rst(rst){
+            dff on_off_toggle
+        }
+        
+    }
+    
+    const GREEN = $reverse({3b110, 3b110, 3b110, 3b110})
+    const BLUE = $reverse({3b010, 3b010, 3b010, 3b010})
+    const RED = $reverse({3b011, 3b011, 3b011, 3b011})
+    const YELLOW = $reverse({3b100, 3b100, 3b100, 3b100})
+    const ORANGE = $reverse({3b101, 3b101, 3b101, 3b101})
+    const VIOLET = $reverse({3b110, 3b110, 3b110, 3b110})
+    const WHITE = $reverse({3b111, 3b111, 3b111, 3b111})
+
+    
+    
+    ws2812b_driver driver(#PIXEL_COUNT(PIXEL_COUNT), .rst(rst), .clk(clk))
+    
+    always {
+        
+        led = 8h00            
+        io_led = 3x{{8h00}}
+        io_segment = 8hff
+        io_select = 4hf
+        data = 0
+        
+        on_off_toggle.d = on_off_toggle.q
+        
+        driver.update = 0
+        driver.clear = 0
+        
+        
+        if (toggle_button_edge.out){
+            driver.update = 1
+            on_off_toggle.d = ~on_off_toggle.q
+        }
+        
+        // connect reverser to driver
+        //index_reverser.input_address = driver.pixel_address
+        
+        pixel_address = driver.pixel_address
+        
+        // based on the encoding extracted from dff led_encoding, we get the 24bit color value
+        driver.color = COLOR_ENCODING[GREEN[pixel_address]] 
+        data = driver.data
+        
+        if(io_dip[2][6]){
+            // or show the addresses 
+            io_led[0] = driver.pixel_address
+            io_led[1] = GREEN[$resize(pixel_address, $clog2($width(GREEN, 0)))]
+            io_led[2] = driver.done
+        }
+        
+        led[7] = on_off_toggle.q
+        
+    }
+}

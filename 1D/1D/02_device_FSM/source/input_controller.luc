@@ -1,0 +1,38 @@
+module input_controller (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    input currVal[3],
+    input io_button[5],     // 5 buttons on IO Shield
+    output validOut
+) {
+
+    sig rst                 // reset signal
+
+    .clk(clk) {
+        // The reset conditioner is used to synchronize the reset signal to the FPGA
+        // clock. This ensures the entire FPGA comes out of reset at the same time.
+        reset_conditioner reset_cond
+
+        button_conditioner but_cond[5](#CLK_FREQ(5x{{2000}}),#MIN_DELAY(5x{{1}}),.in(io_button[4:0]))
+        edge_detector but_edge[5](#RISE(5x{{1}}), #FALL(5x{{0}}),.in(io_button[4:0]))
+
+        .rst(rst) {
+        }
+    }
+
+    always {
+        reset_cond.in = ~rst_n  // input raw inverted reset signal
+        rst = reset_cond.out    // conditioned reset
+
+        validOut = 0;
+       
+        case (currVal) {
+            0:  validOut = but_edge.out[0] ? but_edge.out[0] : 0;
+            1:  validOut = but_edge.out[1] ? but_edge.out[1] : 0;
+            2:  validOut = but_edge.out[2] ? but_edge.out[2] : 0;
+            3:  validOut = but_edge.out[3] ? but_edge.out[3] : 0;
+            default: validOut = 0;
+        }
+        
+    }
+}

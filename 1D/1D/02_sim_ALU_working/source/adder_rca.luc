@@ -1,0 +1,28 @@
+// 32-bit Ripple Carry Adder (RCA) using Full Adders
+module adder_rca #(
+    SIZE ~ 32 : SIZE > 1
+)(
+    input a[SIZE],         // First operand
+    input b[SIZE],         // Second operand
+    output carry_out,      // Carry-out signal
+    output sum[SIZE]       // Sum result
+) {
+    sig carry[SIZE+1];  // Carry chain
+    adder_fa full_adder[SIZE];  // Array of full adders
+
+    always {
+        carry[0] = 0;  // Initialize carry-in
+
+        // Perform bitwise addition with carry propagation
+        repeat (i, SIZE) {
+            full_adder.a[i] = a[i];
+            full_adder.b[i] = b[i];
+            full_adder.cin[i] = carry[i];
+
+            carry[i+1] = full_adder.cout[i];
+            sum[i] = full_adder.s[i];
+        }
+
+        carry_out = carry[SIZE];  // Carry-out from last full adder
+    }
+}

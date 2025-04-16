@@ -1,0 +1,35 @@
+// 32-bit Adder/Subtractor Module
+module adder #(
+    SIZE ~ 32 : SIZE > 0
+)(
+    input a[SIZE],         // First operand
+    input b[SIZE],         // Second operand
+    input alufn[1],        // ALU function selector (0 = Add, 1 = Subtract)
+    output out[SIZE],      // Sum/Difference result
+    output zero_flag,      // Zero flag
+    output overflow_flag,  // Overflow flag
+    output negative_flag   // Negative flag
+) {
+    sig modified_b[SIZE];  // Holds b or its two's complement
+    sig carry_in;          // Carry-in for subtraction
+
+    // Instantiate Ripple Carry Adder and Two’s Complement Module
+    adder_rca rca_inst(#SIZE(SIZE));
+    twos_complement twos_comp_inst(#SIZE(SIZE));
+
+    always {
+        // Convert b to two’s complement if subtracting
+        twos_comp_inst.b = b;
+        modified_b = alufn[0] ? twos_comp_inst.out : b;
+
+        // Perform addition/subtraction using RCA
+        rca_inst.a = a;
+        rca_inst.b = modified_b;
+
+        // Assign results
+        out = rca_inst.sum;
+        negative_flag = rca_inst.sum[SIZE-1];
+        zero_flag = ~|rca_inst.sum;  // Zero flag (true if all bits are 0)
+        overflow_flag = (a[SIZE-1] == modified_b[SIZE-1]) & (rca_inst.sum[SIZE-1] != a[SIZE-1]);
+    }
+}

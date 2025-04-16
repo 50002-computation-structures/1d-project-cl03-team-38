@@ -1,0 +1,77 @@
+// 32-bit Booth's Algorithm Multiplier Module
+module multiplier #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of the multiplier
+)(
+    input a[SIZE],        // Multiplicand
+    input b[SIZE],        // Multiplier
+    input alufn[1],       // ALU function selector for multiplication
+    output out[SIZE]      // Product (lower 32 bits)
+) {
+    sig temp_accum[SIZE][2*SIZE];  // Temporary accumulator
+    sig accum[SIZE][2*SIZE];       // Accumulator and multiplier register
+    sig final_accum[2*SIZE];       // Final accumulated result
+    sig up_half[SIZE][SIZE];       // Upper half of accumulator
+    sig low_half[SIZE][SIZE];      // Lower half of accumulator
+    sig old_lsb[SIZE];             // Previous LSB for Booth’s Algorithm
+    #SIZE(SIZE){
+        adder adder[SIZE];             // Instantiated 32-bit adders        
+    }
+    #SIZE(2*SIZE){
+        shifter_ArithBitR shiftR[SIZE]; // Instantiated arithmetic right shifters        
+    }
+
+    always {
+        // Initialize values
+        repeat(i, SIZE) {
+            adder.a[i] = 0;
+            adder.b[i] = 0;
+            adder.alufn[i] = 0;
+            shiftR.a[i] = 0;
+            shiftR.shift[i] = 0;
+            accum[i] = 0;
+            up_half[i] = 0;
+            low_half[i] = 0;
+            old_lsb[i] = 0;
+            temp_accum[i] = 0;
+        }
+        
+        // Initialize Booth’s Algorithm
+        accum[0] = c{SIZEx{0}, a}; // Concatenate multiplicand with leading 0s
+        old_lsb[0] = 0;            // Initialize previous LSB to 0
+        
+        repeat (i, SIZE) {
+            // Booth's Algorithm Operations
+            if (accum[i][0] == 0 && old_lsb[i] == 1) {  // Add multiplicand
+                adder.a[i] = accum[i][2*SIZE-1:SIZE];
+                adder.b[i] = b;
+                up_half[i] = adder.out[i];    
+            } 
+            else if (accum[i][0] == 1 && old_lsb[i] == 0) {  // Subtract multiplicand
+                adder.a[i] = accum[i][2*SIZE-1:SIZE];
+                adder.b[i] = b;
+                adder.alufn[i] = 1; // Enable subtraction
+                up_half[i] = adder.out[i];    
+            } 
+            else { // No operation, retain previous value
+                up_half[i] = accum[i][2*SIZE-1:SIZE];
+            }
+
+            // Update lower half and perform shift
+            low_half[i] = accum[i][SIZE-1:0];
+            temp_accum[i] = c{up_half[i], low_half[i]};            
+            shiftR.a[i] = temp_accum[i];
+            shiftR.shift[i] = 1b1;
+
+            if (i < SIZE-1) {  
+                old_lsb[i+1] = accum[i][0];
+                accum[i+1] = shiftR.result[i];
+            } 
+            else if (i == SIZE-1) {
+                final_accum = shiftR.result[i];
+            }
+        }
+
+        // Output lower 32 bits
+        out = alufn ? final_accum[SIZE-1:0] : 0;
+    }
+}

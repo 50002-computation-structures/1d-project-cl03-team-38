@@ -1,0 +1,58 @@
+module alchitry_top (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    output led[8],          // 8 user controllable LEDs
+    input usb_rx,           // USB->Serial input
+    output usb_tx,          // USB->Serial output
+    output io_led[3][8],    // LEDs on IO Shield
+    output io_segment[8],   // 7-segment LEDs on IO Shield
+    output io_select[6],    // Digit select on IO Shield
+    input io_button[5],     // 5 buttons on IO Shield
+    input io_dip[3][8]      // DIP switches on IO Shield
+) {
+    
+    sig rst                 // reset signal
+    const CLOCK_DIVIDER = $is_sim() ? 11 : 26        // note that frequency needs to be tweaked
+    const CLK_FREQ = $is_sim() ? 1000 : 100000000    // segment does not display numbers properly currently, but all 6 are able to display
+    const SEG_REFRESH = $is_sim() ? 2 : 10           // note that frequency needs to be tweaked
+    
+    .clk(clk) {
+        reset_conditioner reset_cond
+        button_conditioner io_button_0(.in(io_button[0]), #CLK_FREQ(CLK_FREQ))
+        .rst(rst){
+             dff seg_multiplex[3](#INIT(0))
+             counter slow_clk(#SIZE(1), #DIV(CLOCK_DIVIDER))
+             counter seg_clk(#SIZE(1), #DIV(SEG_REFRESH))
+        }
+        edge_detector button_0_edge(#RISE(1), #FALL(0), .in(io_button_0.out))
+        edge_detector button_1_edge(#RISE(1), #FALL(0), .in(io_button_0.out))
+        edge_detector seg_clk_edge(#RISE(1), #FALL(0), .in(seg_clk.value))
+        random_number_generator generator(.slow_clk(slow_clk.value), .refresh(button_0_edge.out))
+    }
+    
+    decoder seg_selector(#WIDTH(2), .in(seg_multiplex.q))
+    bin_to_dec bin_to_dec(#DIGITS(6), .value(generator.out), #LEADING_ZEROS(1))    // changed 4 to 6
+    
+    // match encoder[0].char to bin_to_dec.digits[0], and so on
+    seven_segment_encoder encoder[6](.char($reverse(bin_to_dec.digits)))    // changed 4 to 6
+    
+    always {
+        reset_cond.in = ~rst_n  // input raw inverted reset signal
+        rst = reset_cond.out    // conditioned reset
+        
+        led = 8h00              // turn LEDs off
+        
+        usb_tx = usb_rx         // loop serial port
+        
+        seg_multiplex.d = seg_multiplex.q
+        
+        if(seg_clk_edge.out){
+            seg_multiplex.d = seg_multiplex.q + 1
+        }
+       
+        io_led[2:1] = 2x{{8h00}}
+        io_led[0] = generator.out
+        io_segment = encoder.segs[seg_multiplex.q]
+        io_select = seg_selector.out
+    }
+}

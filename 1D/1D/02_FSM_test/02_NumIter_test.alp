@@ -1,0 +1,199 @@
+{
+    "project": {
+        "type": "V1.3",
+        "projectName": "02_NumIter_test",
+        "board": "Alchitry Au",
+        "sourceFiles": [
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/alchitry_top.luc"
+                },
+                "top": true
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Conditioning/reset_conditioner.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/decimal_counter.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/multi_decimal_counter.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/multi_seven_seg.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/counter.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/decoder.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/seven_seg.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Pulses/edge_detector.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/pipeline.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Conditioning/button_conditioner.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/input_controller.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Miscellaneous/bin_to_dec.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/adder.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/adder_fa.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/adder_rca.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/alu.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/compare.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/compare_mux_4.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/divider.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/pn_gen.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/random_number_generator.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/shifter_BitL.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/twos_complement.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/number_generator.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Memory/simple_dual_port_ram.v"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/data_rom.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/toggle_mode.luc"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "source/ws2812b_driver.luc"
+                }
+            }
+        ],
+        "constraintFiles": [
+            {
+                "file": {
+                    "type": "Component",
+                    "path": "Constraints/alchitry.acf"
+                }
+            },
+            {
+                "file": {
+                    "type": "DiskFile",
+                    "path": "constraint/io_v1_pulldown.acf"
+                }
+            }
+        ],
+        "ipCores": []
+    }
+}

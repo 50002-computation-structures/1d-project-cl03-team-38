@@ -1,0 +1,32 @@
+module multi_decimal_counter #(
+    DIGITS = 4 : DIGITS >= 1,  // number of digits
+    MODE = 0 : MODE == 1 || MODE == 0 // count direction
+) (
+    input clk,                // clock
+    input rst,                // reset
+    input inc,                // increment counter
+    input start[DIGITS][4],
+    input limit[DIGITS][4],
+    output digits[DIGITS][4]  // digit values
+) {
+    .clk(clk), .rst(rst) {
+        decimal_counter dctr[DIGITS](.start(start[DIGITS-1:0]),.limit(limit[DIGITS-1:0]))
+    }
+    
+    always {
+        dctr.inc = 0;
+        dctr.dec = 0;
+        
+        
+        if (MODE == 0){
+            dctr.inc[0] = inc   // increment the first digit
+            dctr.inc[DIGITS-1:1] = dctr.ovfp[DIGITS-2:0] // if the previous digit overflows, increment the next
+        }
+        if (MODE == 1){    // if dec mode and 
+            dctr.dec[0] = inc
+            dctr.dec[DIGITS-1:1] = dctr.ovfn[DIGITS-2:0] // if the previous digit overflows, increment the next
+        }
+        digits = dctr.value // output the values
+
+    }
+}

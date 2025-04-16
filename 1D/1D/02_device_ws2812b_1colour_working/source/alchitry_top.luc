@@ -1,0 +1,52 @@
+module alchitry_top (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    output led[8],          // 8 user controllable LEDs
+    input usb_rx,           // USB->Serial input
+    output usb_tx,          // USB->Serial output
+    output io_led[3][8],    // LEDs on IO Shield
+    output io_segment[8],   // 7-segment LEDs on IO Shield
+    output io_select[4],    // Digit select on IO Shield
+    input io_button[5],     // 5 buttons on IO Shield
+    input io_dip[3][8],      // DIP switches on IO Shield
+    output data
+) {
+    
+    sig rst                 // reset signal
+    
+    const COLUMN_DIMENSION = 4 // how many "columns"? 
+    const ROW_DIMENSION = 1 // how many "rows"?
+    const PIXEL_COUNT = 4 // how many LEDs in total? 
+    
+    .clk(clk) {
+        // The reset conditioner is used to synchronize the reset signal to the FPGA
+        // clock. This ensures the entire FPGA comes out of reset at the same time.
+        reset_conditioner reset_cond
+        .rst(rst){
+            toggle_mode toggle_mode(.io_button(io_button), .io_dip(io_dip), 
+                #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION),
+                #PIXEL_COUNT(PIXEL_COUNT))
+        }
+    }
+    
+    always {
+        reset_cond.in = ~rst_n  // input raw inverted reset signal
+        rst = reset_cond.out    // conditioned reset
+        
+        usb_tx = usb_rx         // loop serial port
+        io_segment = 8hF
+        io_select = 4hF
+        led = 8h00
+        data = toggle_mode.data
+        io_led = 3x{{8h00}}
+        
+        io_segment = toggle_mode.io_segment
+        io_select = toggle_mode.io_select
+        data = toggle_mode.data
+        led = toggle_mode.led
+        io_led = toggle_mode.io_led 
+        
+     
+        
+    }
+}

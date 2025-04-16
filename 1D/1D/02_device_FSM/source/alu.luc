@@ -1,0 +1,82 @@
+// Arithmetic Logic Unit (ALU)
+module alu #(
+    SIZE ~ 32 : SIZE > 0  // Bit width of the ALU
+)(
+    input a[SIZE],         // First operand
+    input b[SIZE],         // Second operand
+    input alufn[6],  
+    output z,
+    output v,
+    output n,      // ALU function selector
+    output out[SIZE]       // ALU result    
+){
+    // Status flags
+    sig zero_flag;
+    sig overflow_flag;
+    sig negative_flag;  
+
+    // Instantiate functional units
+    adder adder_inst(#SIZE(SIZE));
+    //multiplier multiplier_inst(#SIZE(SIZE));
+    divider divider_inst(#SIZE(SIZE));
+    //boolean boolean_inst(#SIZE(SIZE));
+    //shifter shifter_inst(#SIZE(SIZE));
+    compare compare_inst(#SIZE(SIZE));
+
+    always {
+        // Configure adder
+        adder_inst.a = a;
+        adder_inst.b = b;
+        adder_inst.alufn = alufn[0];  // 00 = Add, 01 = Subtract
+        zero_flag = adder_inst.zero_flag;
+        overflow_flag = adder_inst.overflow_flag;
+        negative_flag = adder_inst.negative_flag;
+        
+        z = adder_inst.zero_flag
+        v = adder_inst.overflow_flag
+        n = adder_inst.negative_flag
+        
+        // Configure multiplier
+        //multiplier_inst.a = a;
+        //multiplier_inst.b = b;
+        //multiplier_inst.alufn = alufn[1];
+
+        divider_inst.a = a;
+        divider_inst.b = b; 
+        divider_inst.alufn = alufn[1]&alufn[0]
+        
+        // Configure boolean unit
+        //boolean_inst.a = a;
+        //boolean_inst.b = b;
+        //boolean_inst.alufn = alufn[3:1];  // 100: AND, 111: OR, 011: XOR, 101: Pass-through A
+        
+        // Configure shifter
+        //shifter_inst.a = a;
+        //shifter_inst.b = b;
+        //shifter_inst.alufn = alufn[3:2];  // 00: Logical Left, 01: Logical Right, 11: Arithmetic Right
+        
+        // Configure comparator
+        compare_inst.z = zero_flag;
+        compare_inst.v = overflow_flag;
+        compare_inst.n = negative_flag;
+        compare_inst.alufn = alufn[2:1];  // 01: EQ, 10: LT, 11: LE
+
+        // ALU Function Selection
+        case (alufn[5:0]) {
+            6b000000: out = adder_inst.out;
+            6b000001: out = adder_inst.out;
+            //6b000010: out = multiplier_inst.out;
+            6b000011: out = divider_inst.out;
+            //6b011110: out = boolean_inst.out;
+            //6b010110: out = boolean_inst.out;
+            //6b011110: out = boolean_inst.out;
+            //6b100000: out = shifter_inst.out; // LS
+            //6b100010: out = shifter_inst.out; 
+            //6b100110: out = shifter_inst.out;
+            //6b110011: out = compare_inst.out;
+            6b110101: out = compare_inst.out; // LT
+            //6b110111: out = compare_inst.out;
+            default: out = 0;
+        }
+    }
+}

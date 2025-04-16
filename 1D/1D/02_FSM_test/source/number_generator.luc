@@ -1,0 +1,38 @@
+// Top-level module for Alchitry FPGA board
+module number_generator (
+    input clk,              // 100MHz clock input
+    input rst_n,            // Active-low reset button
+    input in, 
+    output out[2]
+    
+) {
+    sig rst                 // reset signal
+    const CLOCK_DIVIDER = $is_sim() ? 8 : 26
+    const CLK_FREQ = $is_sim() ? 1000 : 100000000
+    const SEG_REFRESH = $is_sim() ? 2 : 10
+
+    // Clock domain for synchronization
+    .clk(clk) {
+        reset_conditioner reset_cond
+        .rst(rst){
+             counter slow_clk(#SIZE(1), #DIV(CLOCK_DIVIDER))  // slower
+        }
+        random_number_generator generator(.slow_clk(slow_clk.value), .refresh(in))
+    }   // RNG powered by slow clock counter, reset upon button 0 
+  
+    bin_to_dec bin_to_dec(#DIGITS(4), .value(generator.out), #LEADING_ZEROS(1)) 
+    // convert generator output binary to 4 decimal digits array. leading empty digits marked 0
+      
+    sig finalDigits[4][4] = $reverse(bin_to_dec.digits);
+    sig combDigits[4] = finalDigits[3]^finalDigits[2];
+
+    alu alu(#SIZE(32),.a($resize(combDigits,32)),.b($resize(4d4,32)),.alufn(6b000011))
+        
+    always {
+        reset_cond.in = ~rst_n; // Synchronize reset signal
+        rst = reset_cond.out;   // Conditioned reset signal
+
+        out = $resize(alu.out,3); 
+        
+    }
+}

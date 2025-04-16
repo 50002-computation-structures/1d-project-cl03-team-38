@@ -1,0 +1,77 @@
+module toggle_mode#(
+    COLUMN_DIMENSION = 4 : COLUMN_DIMENSION > 0,
+    ROW_DIMENSION = 1 : ROW_DIMENSION > 0,
+    PIXEL_COUNT = 4 : PIXEL_COUNT > 0,
+    BUFFER_SIZE = 12 : BUFFER_SIZE > 0 // ensure this value is larger than PIXEL_COUNT * $clog2(COLOR_ENCODING)
+) (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    input selColour[3],
+    output data
+) {
+    
+    // GREEN (100), BLUE (011), RED (010), YELLOW (001), WHITE (000)
+    const COLOR_ENCODING = {24hFF0000,24h0000FF,24h00FF00,24h82EEEE,24hFFFFFF}
+   
+    sig pixel_address[BUFFER_SIZE]
+    sig colour[4][3]
+    sig rst                 // reset signal
+    
+    const CLK_FREQ = $is_sim() ? 1000 : 100000000
+    //index_reverser index_reverser(#COLUMN_DIMENSION(COLUMN_DIMENSION), #SIZE($clog2(PIXEL_COUNT))) 
+    
+    .clk(clk){
+        reset_conditioner reset_cond
+        .rst(rst){
+            dff pulseCount[1](#INIT(1));
+        }
+        
+    }
+    
+    const GREEN = {3b100, 3b100, 3b100, 3b100}
+    const BLUE = {3b011, 3b011, 3b011, 3b011}
+    const RED = {3b010, 3b010, 3b010, 3b010}
+    const YELLOW = {3b001, 3b001, 3b001, 3b001}
+    const WHITE = {3b000, 3b000, 3b000, 3b000}
+   
+    ws2812b_driver driver(#PIXEL_COUNT(PIXEL_COUNT), .rst(rst), .clk(clk))
+    
+    always {
+        reset_cond.in = ~rst_n  // input raw inverted reset signal
+        rst = reset_cond.out    // conditioned reset
+        
+        pulseCount.d = pulseCount.q;
+        data = 0
+        
+        driver.update = 0
+        driver.clear = 0
+       
+        pixel_address = driver.pixel_address
+        
+        case(selColour){
+            3b000: 
+                colour = RED; 
+                pulseCount.d = 0; 
+            3b001:
+                colour = GREEN; 
+                pulseCount.d = 0; 
+            3b010: 
+                colour = BLUE;
+                pulseCount.d = 0; 
+            3b011: 
+                colour = YELLOW; 
+                pulseCount.d = 0; 
+            default: 
+                colour = WHITE; 
+                pulseCount.d = 0; 
+        }
+        
+        // based on the encoding extracted from dff led_encoding, we get the 24bit color value
+        driver.color = COLOR_ENCODING[colour[pixel_address]] 
+        data = driver.data
+        
+        if (pulseCount.q == 0)driver.update=1; 
+        
+       
+    }
+}
